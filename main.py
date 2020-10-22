@@ -14,17 +14,18 @@ import argparse
 import cv2
 import os
 import glob
-from PIL import Image 
+from PIL import Image
 from numpy import *
+
 
 def main():
     print('Hello AI')
     # image = cv2.imread('WordInputFile/WordPage000000.bmp')
-    #cv2.imshow("image",image)
-    #cv2.waitKey()
-    
+    # cv2.imshow("image",image)
+    # cv2.waitKey()
+
     # define parameters of HOG feature extraction
-    size = (1000,400)
+    size = (1000, 400)
     orientations = 9
     pixels_per_cell = (8, 8)
     cells_per_block = (2, 2)
@@ -32,45 +33,47 @@ def main():
     data = []
     labels = []
 
-    pos_im_path = r"./Data/ddd/pos/100" 
+    pos_im_path = r"./Data/ddd/pos/100"
     neg_im_path = r"./Data/ddd/neg"
 
-    pos_im_listing = os.listdir(pos_im_path) 
+    pos_im_listing = os.listdir(pos_im_path)
     neg_im_listing = os.listdir(neg_im_path)
-    num_pos_samples = len(pos_im_listing) 
+    num_pos_samples = len(pos_im_listing)
     num_neg_samples = len(neg_im_listing)
-    print(num_pos_samples,num_neg_samples)
-    
+    print(num_pos_samples, num_neg_samples)
+
     le = LabelEncoder()
 
     for file in pos_im_listing:
-        img = cv2.imread(pos_im_path + '/' + file) # open the file
+        img = cv2.imread(pos_im_path + '/' + file)  # open the file
         img = cv2.resize(img, size)
-        gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         # calculate HOG for positive features
-        fd = hog(img, orientations, pixels_per_cell, cells_per_block, block_norm='L2', feature_vector=True)# fd= feature descriptor
+        fd = hog(img, orientations, pixels_per_cell, cells_per_block,
+                 block_norm='L2', feature_vector=True)  # fd= feature descriptor
         data.append(fd)
         # cv2.imshow('abcd',fd)
         # cv2.waitKey()
         labels.append(1)
     print(len(data))
     for file in neg_im_listing:
-        img= cv2.imread(neg_im_path + '/' + file)
+        img = cv2.imread(neg_im_path + '/' + file)
         img = cv2.resize(img, size)
-        gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         # Now we calculate the HOG for negative features
-        fd = hog(img, orientations, pixels_per_cell, cells_per_block, block_norm='L2', feature_vector=True) 
+        fd = hog(img, orientations, pixels_per_cell, cells_per_block,
+                 block_norm='L2', feature_vector=True)
         data.append(fd)
         labels.append(0)
     print(len(data))
 
     # encode the labels, converting them from strings to integers
     # labels = le.fit_transform(labels)
-    
+
     print(" Constructing training/testing split...")
     trainData, testData, trainLabels, testLabels = train_test_split(
         data, labels, test_size=0.20, random_state=42)
-    
+
     print(trainData[0])
     print("Label = ", trainLabels[50])
 
@@ -84,9 +87,10 @@ def main():
     model.fit(trainData, trainLabels)
     pred = model.predict(testData)
 
-
-    print(classification_report(testLabels, pred, labels=model.classes_, target_names=None, sample_weight=None, digits=3))
+    print(classification_report(testLabels, pred, labels=model.classes_,
+                                target_names=None, sample_weight=None, digits=3))
     crop(model)
+
 
 def crop(model):
     size = (1000, 1700)
@@ -95,18 +99,18 @@ def crop(model):
     pixels_per_cell = (8, 8)
     cells_per_block = (2, 2)
     threshold = .3
-    img = cv2.imread('./Data/ddd/imageread/100_1.jpg')
+    img = cv2.imread('./Data/ddd/imageread/100_13.jpg')
     cv2.imshow("abc", img)
     cv2.waitKey()
-    for i in range(0,1700-100,30):
+    for i in range(0, 1700-100, 30):
         x1, x2, y1, y2 = 0, 1000, i, i + 10
         img = cv2.resize(img, size)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         crop_img = img[y1:y2, x1:x2]
-        crop_img = cv2.resize(crop_img,size1)
+        crop_img = cv2.resize(crop_img, size1)
         # cv2.imshow("abc", crop_img)
         # cv2.waitKey()
-        fd = hog(crop_img, orientations, pixels_per_cell, cells_per_block, block_norm='L2', feature_vector=True)
+        fd = hog(crop_img, orientations, pixels_per_cell,cells_per_block, block_norm='L2', feature_vector=True)
         pred = model.predict([fd])
         if (pred != 1):
             cv2.imshow('imgj', crop_img)
@@ -114,6 +118,7 @@ def crop(model):
         else:
             print(i)
     print("Crop Image Ended")
+
 
 if (__name__ == '__main__'):
     main()
